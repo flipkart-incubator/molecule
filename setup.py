@@ -3,12 +3,9 @@ from setuptools import find_packages, setup
 with open("README.md", "r") as f:
     long_description = f.read()
 
-# list of packages to be installed
-# pyyaml==5.3.1 google-cloud-logging google-cloud-storage google-cloud-bigquery zmq flask==2.2.2 flask_cors python-crontab pandas pyarrow gcsfs pymongo Flask-PyMongo
-
 setup(
     name="molecule",
-    version="0.0.1",
+    version="0.1.0",
     description="An scalable ML Platform to help you build, train, and deploy models",
     packages=find_packages(),
     long_description=long_description,
