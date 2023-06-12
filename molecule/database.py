@@ -63,13 +63,12 @@ class Database:
     db = client[db_env]
     return client, db
   
-  def __init__(self, db_env='stage', rebuild=False):
+  def __init__(self, db_env='stage'):
     """
     Initializes a Database object.
 
     Args:
     - db_env (str): The name of the database environment.
-    - rebuild (bool): Whether to rebuild the worker cache or not.
     """
     if os.environ.get('MONGO_URI'):
       self.client = MongoClient(os.environ.get('MONGO_URI'))
@@ -82,17 +81,6 @@ class Database:
     self.expire_days = 150
     self.manager = multiprocessing.Manager()
     self.lock = self.manager.Lock()
-    if rebuild:
-      self._worker_cache = self.manager.dict()
-      self._rebuildCache()
-    
-  def _rebuildCache(self):
-    """
-    Rebuilds the worker cache.
-    """
-    self._worker_cache = self.manager.dict()
-    for doc in self.db['workers'].find():
-      self._worker_cache[doc['_id']] = self.manager.dict(doc)
     
   def _createIndexes(self):
     """
@@ -577,7 +565,6 @@ class Database:
       'add_worker_timestamp': datetime.now().astimezone(LOCAL_TZ),
       # 'last_heartbeat_epoch': int(time.time()),
     }
-    self._worker_cache[instance_id] = self.manager.dict(worker_data)
     self.db['workers'].update_one({'_id': instance_id}, {'$set': worker_data}, upsert=True)
     self.lock.release()
     return True
@@ -595,10 +582,6 @@ class Database:
     - bool: True if the worker's ports were updated successfully, False otherwise.
     """
     self.lock.acquire()
-    if instance_id not in self._worker_cache:
-      self._worker_cache[instance_id] = self.manager.dict(self.getWorkerFromDB(instance_id))
-    self._worker_cache[instance_id]['port'] = listen_port
-    self._worker_cache[instance_id]['health_port'] = health_port
     self.db['workers'].update_one({'_id': instance_id}, {'$set': {
       'port': listen_port,
       'health_port': health_port
@@ -619,21 +602,32 @@ class Database:
     - bool: True if the worker was updated successfully, False otherwise.
     """
     self.lock.acquire()
-    if instance_id not in self._worker_cache:
-      self._worker_cache[instance_id] = self.manager.dict(self.getWorkerFromDB(instance_id))
     update_data = {
       'status': status
     }
     if task_hash is not None:
       update_data['current_task_hash'] = task_hash
-      self._worker_cache[instance_id]['current_task_hash'] = task_hash
     if status == WorkerStatus.FREE:
       update_data['mark_free_timestamp'] = datetime.now().astimezone(LOCAL_TZ)
-      self._worker_cache[instance_id]['mark_free_timestamp'] = datetime.now().astimezone(LOCAL_TZ)
-    self._worker_cache[instance_id]['status'] = status
     self.db['workers'].update_one({'_id': instance_id}, {'$set': update_data})
     self.lock.release()
     return True
+  
+  def checkWorkerExistsInDB(self, instance_id):
+    """
+    Checks if a worker exists in the database.
+
+    Args:
+    - instance_id (str): The ID of the worker to check.
+
+    Returns:
+    - bool: True if the worker exists in the database, False otherwise.
+    """
+    worker = self.db['workers'].find_one({'_id': instance_id})
+    if worker is not None:
+      return True
+    else:
+      return False
 
   def getWorkerFromDB(self, instance_id):
     """
@@ -645,8 +639,6 @@ class Database:
     Returns:
     - dict: A dictionary containing the worker's information.
     """
-    if instance_id in self._worker_cache:
-      return self._worker_cache[instance_id]
     worker = self.db['workers'].find_one({'_id': instance_id})
     if worker is not None:
       return worker
@@ -666,22 +658,13 @@ class Database:
     """
     self.lock.acquire()
     matching_workers = []
-    for worker in self._worker_cache.values():
-      if exact_machine_type == worker['gce_machine_type']:
-        if status is None or worker['status'] == status:
-          if worker['status'] not in [WorkerStatus.DELETED, WorkerStatus.STALE]:
-            matching_workers.append(worker)
-    if len(matching_workers)>0:
-      self.lock.release()
-      return matching_workers
-    else:
-      workers = self.db['workers'].find({'gce_machine_type': exact_machine_type})
-      for worker in workers:
-        if status is None or worker['status'] == status:
-          if worker['status'] not in [WorkerStatus.DELETED, WorkerStatus.STALE]:
-            matching_workers.append(worker)
-      self.lock.release()
-      return matching_workers
+    workers = self.db['workers'].find({'gce_machine_type': exact_machine_type})
+    for worker in workers:
+      if status is None or worker['status'] == status:
+        if worker['status'] not in [WorkerStatus.DELETED, WorkerStatus.STALE]:
+          matching_workers.append(worker)
+    self.lock.release()
+    return matching_workers
     
   def getMatchingWorkersFromDB(self, cpu, memory, gpu, disk_size, affinity, status=None):
     """
@@ -700,7 +683,8 @@ class Database:
     """
     self.lock.acquire()
     matching_workers = []
-    for worker in self._worker_cache.values():
+    workers = self.db['workers'].find({'affinity': affinity})
+    for worker in workers:
       if int(worker['cpu']) >= int(cpu) and \
         int(worker['memory'].replace('G', '')) >= int(memory.replace('G', '')) and \
         int(worker['gpu']) >= int(gpu) and \
@@ -709,24 +693,10 @@ class Database:
         if status is None or worker['status'] == status:
           if worker['status'] not in [WorkerStatus.DELETED, WorkerStatus.STALE]:
             matching_workers.append(worker)
-    if len(matching_workers)>0:
-      self.lock.release()
-      return matching_workers
-    else:
-      workers = self.db['workers'].find({'affinity': affinity})
-      for worker in workers:
-        if int(worker['cpu']) >= int(cpu) and \
-          int(worker['memory'].replace('G', '')) >= int(memory.replace('G', '')) and \
-          int(worker['gpu']) >= int(gpu) and \
-          int(worker['disk_size'].replace('G', '')) >= int(disk_size.replace('G', '')) and \
-          worker['affinity'] == affinity:
-          if status is None or worker['status'] == status:
-            if worker['status'] not in [WorkerStatus.DELETED, WorkerStatus.STALE]:
-              matching_workers.append(worker)
-      self.lock.release()
-      return matching_workers
+    self.lock.release()
+    return matching_workers
     
-  def getAllWorkersFromDB(self, status=[]):
+  def getAllWorkersFromDB(self, status=[], autoscale_only=False):
     """
     Retrieve a list of all workers from the database that match the specified status.
 
@@ -738,19 +708,15 @@ class Database:
     """
     self.lock.acquire()
     workers = []
-    for worker in self._worker_cache.values():
-      if len(status)==0 or (worker is not None and worker['status'] in status):
-        workers.append(worker)
-    if len(workers)>0:
-      self.lock.release()
-      return workers
+    if autoscale_only:
+      db_workers = self.db['workers'].find({'autoscale': True})
     else:
       db_workers = self.db['workers'].find({})
-      for worker in db_workers:
-        if len(status)==0 or worker['status'] in status:
-          workers.append(worker)
-      self.lock.release()
-      return workers
+    for worker in db_workers:
+      if len(status)==0 or worker['status'] in status:
+        workers.append(worker)
+    self.lock.release()
+    return workers
     
   def deleteWorkerFromDB(self, instance_id):
     """
@@ -764,8 +730,6 @@ class Database:
     """
     self.lock.acquire()
     try:
-      if instance_id in self._worker_cache:
-        del self._worker_cache[instance_id]
       self.db['workers'].delete_one({'_id': instance_id})
       self.lock.release()
       return True

@@ -325,7 +325,6 @@ class Autoscaler:
     self.queue_lock = self.manager.Lock()
     self.queue_utils_obj = QueueUtils(self.queue_lock)
     self.createWorkerQueue = MultiProcessPriorityQueue(self.manager)
-    self.initiatedWorkerQueue = self.manager.list()
     self.removeWorkerQueue = self.manager.list()
     # To track if server is up or not.
     self.server_up = multiprocessing.Value('i', 1)
@@ -385,7 +384,6 @@ class Autoscaler:
           'platform': platform
         }
         self.db.addWorkerInDB(worker_info, WorkerStatus.INITIATED)
-        self.queue_utils_obj.appendToQueue(self.initiatedWorkerQueue, instance_id)
         log.debug('Added instance {} to DB'.format(instance_name))
         self.lock.release()
       else:
@@ -428,7 +426,7 @@ class Autoscaler:
 
     """
     self.lock.acquire()
-    running_workers = self.db.getAllWorkersFromDB([WorkerStatus.FREE, WorkerStatus.BUSY])
+    running_workers = self.db.getAllWorkersFromDB([WorkerStatus.FREE, WorkerStatus.BUSY], autoscale_only=True)
     scale_down_workers = self.asp.checkScaleDown(running_workers)
     for worker in scale_down_workers:
       self.db.updateWorkerInDB(worker['instance_id'], WorkerStatus.DELETED)

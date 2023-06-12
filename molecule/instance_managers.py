@@ -267,9 +267,9 @@ class LocalInstanceManager:
     # create spawner with name instance_name and affinity
     # check if gpu is requested
     if 'gpu' in machine_type and machine_type['gpu'] > 0:
-      spawner_cmd = 'molecule-spawner -o -p {port} -s {store_loc} -mt gpu --storage-type nfs'.format(port=random.randint(2000,9999), store_loc=os.environ.get('store_loc'))
+      spawner_cmd = 'molecule-spawner -o -as -p {port} -s {store_loc} -mt gpu --storage-type nfs'.format(port=random.randint(2000,9999), store_loc=os.environ.get('store_loc'))
     else:
-      spawner_cmd = 'molecule-spawner -o -p {port} -s {store_loc} -mt cpu --storage-type nfs'.format(port=random.randint(2000,9999), store_loc=os.environ.get('store_loc'))
+      spawner_cmd = 'molecule-spawner -o -as -p {port} -s {store_loc} -mt cpu --storage-type nfs'.format(port=random.randint(2000,9999), store_loc=os.environ.get('store_loc'))
     print("Trying to create instance: {}".format(spawner_cmd))
     p = subprocess.Popen(spawner_cmd, shell=True)
     self.process_id_map[instance_name] = str(p.pid)

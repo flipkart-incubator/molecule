@@ -25,7 +25,7 @@ class Spawner:
   It also provides methods to check if a task has been computed and to synchronize inputs.
   """
   def __init__(self, in_port, in_health_port, command_server, store_loc, db, remote_ip=None, remote_store_loc=None,
-           docker_config=None, spawner_type=None, offline=False, storage_type='nfs'):
+           docker_config=None, spawner_type=None, offline=False, autoscale=True, storage_type='nfs'):
     """
     Initializes the Spawner object with the given parameters.
 
@@ -74,6 +74,7 @@ class Spawner:
       self.docker_map = json.loads(docker_config)
 
     self.store = pl_storage.SpawnerStorage(store_loc, remote_ip, remote_store_loc, mode=storage_type, db=self.db)
+    self.autoscale = autoscale
 
     if offline:
       self.in_ip = 'localhost'
@@ -104,6 +105,8 @@ class Spawner:
     self.worker_info['memory'] = self.im.getMemory()
     self.worker_info['gpu'] = self.im.getGpuCount()
     self.worker_info['gpu_type'] = self.im.getGpuType()
+    self.worker_info['autoscale'] = self.autoscale
+    self.worker_info['platform'] = self.im.getPlatform()
     log.info(spawner_type + ' spawner ' + in_ip + ':' + in_port + ' connecting to server')
     out_sock = ZMQServer.getClientSock(self.command_ip, self.command_port)
     ZMQServer.sendCommand(out_sock, MessageBase.COMMAND_CONNECT, dict(self.worker_info), MessageBase.ACK_CONNECT)
@@ -488,6 +491,7 @@ def main():
   arg_parser.add_argument('-rip', '--remote-ip', action='store', help='Remote IP for online storage')
   arg_parser.add_argument('-rsl', '--remote-store-loc', action='store', help='Remote storage location')
   arg_parser.add_argument('-dc', '--docker-config', action='store', help='Docker Config File')
+  arg_parser.add_argument('-as', '--autoscale', action='store_true', help='Autoscale the spawner instances')
   arg_parser.add_argument('-o', '--offline', action='store_true', help='Connect to central online platform')
   arg_parser.add_argument('--storage-type', action='store', help='nfs or gcs storage')
 
@@ -534,7 +538,7 @@ def main():
     spawner = Spawner(port, ''.join([args.health_port_prefix, port]), args.command_server, args.store_loc, db,
                       remote_ip=args.remote_ip, remote_store_loc=args.remote_store_loc,
                       docker_config=args.docker_config, spawner_type=args.machine_type,
-                      offline=args.offline, storage_type=args.storage_type)
+                      offline=args.offline, autoscale=args.autoscale, storage_type=args.storage_type)
     spawner.startExecutor()
     spawners.append(spawner)
 

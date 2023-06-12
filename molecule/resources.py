@@ -106,6 +106,18 @@ class InstanceMetadata:
     except:
       return 'local'
     
+  def getPlatform(self):
+    """
+    This method returns the name of the cloud platform on which the instance is running.
+
+    Args:
+    - None
+
+    Returns:
+    - str: The name of the cloud platform.
+    """
+    return self.cloud_platform
+    
   def getInstanceId(self):
     """
     This method returns the ID of the instance.
@@ -204,9 +216,9 @@ class InstanceMetadata:
     - None
 
     Returns:
-    - str: The number of CPUs of the instance.
+    - int: The number of CPUs of the instance.
     """
-    return str(os.cpu_count())
+    return os.cpu_count() or 0
   
   def getMemory(self):
     """
