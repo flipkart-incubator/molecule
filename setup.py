@@ -15,8 +15,8 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/flipkart-incubator/molecule",
     author="Suvigya Vijay",
-    author_email="author@email",
-    license="MIT",
+    author_email="suvigyavijay@gmail.com",
+    license="Apache License 2.0",
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.9",
