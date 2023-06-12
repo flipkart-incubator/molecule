@@ -1,0 +1,45 @@
+hive_dump:
+  params:
+    sc: str
+    hql_path: str
+  inputs:
+  outputs:
+    hive_raw: hive_data
+
+dummy_data_import:
+  params:
+    sc: str
+  inputs:
+    hive_raw: hive_data
+  outputs:
+    validated_data: dummy_data
+
+generate_random_number:
+  params:
+    seed: int
+  inputs:
+  outputs:
+    new_str: dummy
+
+make_dummy_list:
+  params:
+    repeat: int
+  inputs:
+    cut_str: dummy
+  outputs:
+    str_list: dummy
+
+join_list_to_str:
+  params:
+  inputs:
+    str_list: dummy
+  outputs:
+    joined_str: dummy
+
+dummy_combiner:
+  params:
+    combiner_class: str
+  inputs:
+    collect_strs: dummy
+  outputs:
+    comb_out: dummy

@@ -1,0 +1,53 @@
+dummy_master_pipeline:
+  type: dummy
+
+  params:
+    seed: int
+    repeat: int
+
+    gen_random_number_class: str
+    make_dummy_list_class: str
+    join_list_to_str_class: str
+
+  params_map:
+    seed: config/seed
+    repeat: config/repeat
+
+    gen_random_number_class: config/gen_random_number_class
+    make_dummy_list_class: config/make_dummy_list_class
+    join_list_to_str_class: config/join_list_to_str_class
+
+  inputs:
+
+  outputs:
+    final_str: dummy
+
+  tasks:
+    gen_random_number:
+      type: generate_random_number
+      params_map:
+        seed: params/seed
+
+    connect_slave:
+      type: dummy_slave_pipeline
+      params_map:
+        repeat: params/repeat
+        make_dummy_list_class: params/make_dummy_list_class
+        join_list_to_str_class: params/join_list_to_str_class
+
+    make_dummy_list:
+      type: make_dummy_list
+      params_map:
+        repeat: params/repeat
+
+    join_list_to_str:
+      type: join_list_to_str
+      params_map:
+
+
+  deps:
+    connect_slave.input_str: gen_random_number.new_str
+    make_dummy_list.cut_str: connect_slave.out_str
+    join_list_to_str.str_list: make_dummy_list.str_list
+    outputs.out_str: join_list_to_str.joined_str
+

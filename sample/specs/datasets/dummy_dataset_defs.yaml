@@ -1,0 +1,6 @@
+dummy:
+  value: str
+
+dummy_data:
+  sc: str
+  data: df

@@ -1,0 +1,124 @@
+house_price_pred_pipeline:
+  type: example
+
+  params:
+    # global
+    y_col: str
+    drop_cols: list
+
+    # dump_data
+    table: str
+    refresh_id: int
+    hql_path: str
+
+    # import_data
+    check_no_of_cols: int
+
+    # train_test_split
+    seed: int
+    test_size: float
+
+    # preprocess_data
+    scaling_method: str
+
+    # model_train
+    normalize: bool
+    fit_intercept: bool
+    n_jobs: int
+
+    # task classes
+    dump_data_class: class
+    import_data_class: class
+    train_test_split_class: class
+    preprocess_data_class: class
+    model_train_class: class
+    model_infer_class: class
+    compute_metrics_class: class
+
+  params_map:
+    y_col: config/y_col
+    drop_cols: config/drop_cols
+
+    table: config/table
+    refresh_id: config/refresh_id
+    hql_path: config/hql_path
+
+    check_no_of_cols: config/check_no_of_cols
+
+    seed: config/seed
+    test_size: config/test_size
+
+    scaling_method: config/scaling_method
+
+    normalize: config/normalize
+    fit_intercept: config/fit_intercept
+    n_jobs: config/n_jobs
+
+    dump_data_class: config/dump_data_class
+    import_data_class: config/import_data_class
+    train_test_split_class: config/train_test_split_class
+    preprocess_data_class: config/preprocess_data_class
+    model_train_class: config/model_train_class
+    model_infer_class: config/model_infer_class
+    compute_metrics_class: config/compute_metrics_class
+
+  inputs:
+
+  outputs:
+    prediction: housing_split_data
+
+  tasks:
+    dump_data:
+      type: dump_usa_housing
+      params_map:
+        table: params/table
+        refresh_id: params/refresh_id
+        hql_path: params/hql_path
+
+    import_data:
+      type: import_usa_housing
+      params_map:
+        check_no_of_cols: params/check_no_of_cols
+        
+    train_test_split:
+      type: train_test_split_usa_housing
+      params_map:
+        test_size: params/test_size
+        seed: params/seed
+        drop_cols: params/drop_cols
+        
+    preprocess_data:
+      type: preprocess_usa_housing
+      params_map:
+        y_col: params/y_col
+        scaling_method: params/scaling_method
+        
+    model_train:
+      type: train_usa_housing
+      params_map:
+        y_col: params/y_col
+        normalize: params/normalize
+        fit_intercept: params/fit_intercept
+        n_jobs: params/n_jobs
+        
+    model_infer:
+      type: infer_usa_housing
+      params_map:
+        y_col: params/y_col
+
+    compute_metrics:
+      type: compute_metrics_usa_housing
+      params_map:
+        y_col: params/y_col
+
+
+  deps:
+    import_data.in_var: dump_data.out_var
+    train_test_split.in_var: import_data.out_var
+    preprocess_data.in_var: train_test_split.out_var
+    model_train.in_var: preprocess_data.out_var
+    model_infer.model_var: model_train.out_var
+    model_infer.data_var: preprocess_data.out_var
+    compute_metrics.in_var: model_infer.out_var
+    outputs.prediction: model_infer.out_var
+

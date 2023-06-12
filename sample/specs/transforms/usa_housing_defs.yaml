@@ -1,0 +1,63 @@
+dump_usa_housing:
+  params:
+    table: str
+    refresh_id: int
+    hql_path: str
+  inputs:
+  outputs:
+    out_var: hive_data
+
+import_usa_housing:
+  params:
+    check_no_of_cols: int
+  inputs:
+    in_var: hive_data
+  outputs:
+    out_var: housing_data
+
+train_test_split_usa_housing:
+  params:
+    test_size: float
+    seed: int
+    drop_cols: list
+  inputs:
+    in_var: housing_data
+  outputs:
+    out_var: housing_split_data
+
+preprocess_usa_housing:
+  params:
+    y_col: str
+    scaling_method: str
+  inputs:
+    in_var: housing_split_data
+  outputs:
+    out_var: housing_split_data
+
+train_usa_housing:
+  params:
+    y_col: str
+    normalize: bool
+    fit_intercept: bool
+    n_jobs: int
+  inputs:
+    in_var: housing_split_data
+  outputs:
+    out_var: housing_model
+
+infer_usa_housing:
+  params:
+    y_col: str
+  inputs:
+    model_var: housing_model
+    data_var: housing_split_data
+  outputs:
+    out_var: housing_split_data
+
+compute_metrics_usa_housing:
+  params:
+    y_col: str
+  inputs:
+    in_var: housing_split_data
+  outputs:
+    out_var: housing_metrics

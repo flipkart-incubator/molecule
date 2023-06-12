@@ -1,0 +1,90 @@
+dummy_map_combine_pipeline:
+  type: dummy
+
+  params:
+    seed: int
+    repeat: int
+    count: int
+
+    generate_random_number_class: str
+    make_dummy_list_class: str
+    join_list_to_str_class: str
+
+    map_fn_repeats: str
+    use_pipeline_repeats: str
+    use_pipeline_repeats_config: str
+    map_fn_nums: str
+    use_pipeline_nums: str
+    use_pipeline_nums_config: str
+
+    combiner_class: str
+
+  params_map:
+    seed: config/seed
+    repeat: config/repeat
+    count: config/count
+
+    generate_random_number_class: config/generate_random_number_class
+    make_dummy_list_class: config/make_dummy_list_class
+    join_list_to_str_class: config/join_list_to_str_class
+
+    map_fn_repeats: config/map_fn_repeats
+    use_pipeline_repeats: config/use_pipeline_repeats
+    use_pipeline_repeats_config: config/use_pipeline_repeats_config
+    map_fn_nums: config/map_fn_nums
+    use_pipeline_nums: config/use_pipeline_nums
+    use_pipeline_nums_config: config/use_pipeline_nums_config
+
+    combiner_class: config/combiner_class
+
+  inputs:
+
+  outputs:
+    final_str: dummy
+
+  tasks:
+    generate_random_number:
+      type: generate_random_number
+      params_map:
+        seed: params/seed
+
+    random_over_random:
+      type: map_combine
+
+      mappers:
+        gen_random_repeats:
+          type: mapper
+          pipeline_inputs:
+            input_str: new_str
+          params_map:
+            mapper_function: params/map_fn_repeats
+            pipeline: params/use_pipeline_repeats
+            pipeline_config: params/use_pipeline_repeats_config
+            # mapper
+            count: params/count
+            seed: params/seed
+          collect:
+            collect_strs: outputs.out_str
+
+        gen_random_nums:
+          type: mapper
+          pipeline_inputs:
+          params_map:
+            mapper_function: params/map_fn_nums
+            pipeline: params/use_pipeline_nums
+            pipeline_config: params/use_pipeline_nums_config
+            # mapper
+            count: params/count
+            seed: params/seed
+          collect:
+            collect_strs: outputs.final_str
+
+      combiner:
+        type: dummy_combiner
+        params_map:
+          combiner_class: params/combiner_class
+
+  deps:
+    random_over_random.input_str: generate_random_number.new_str
+    outputs.final_str: random_over_random.comb_out
+

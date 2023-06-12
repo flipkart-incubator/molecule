@@ -1,0 +1,19 @@
+hive_data:
+  hive_raw: df
+
+housing_data:
+  data: df
+  row_count: int
+
+housing_split_data:
+  train_data: df
+  test_data: df
+
+housing_model:
+  model: pickle
+
+housing_metrics:
+  mae: float
+  mse: float
+  rmse: float
+  r2: float

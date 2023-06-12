@@ -1,0 +1,21 @@
+store_loc: "<LOCAL_STORE_LOCATION>"
+server_ip: "localhost"
+server_port: 5566
+session_ip: "localhost"
+session_port: 5567
+scheduler_ip: "localhost"
+scheduler_port: 5568
+autoscaler_ip: "localhost"
+autoscaler_port: 5569
+webserver_port: 2020
+platforms:
+- local
+
+
+# To be set as env vars
+GOOGLE_CLOUD_PROJECT: <GCP_PROJECT_NAME>
+GOOGLE_SERVICE_ACCOUNT: <GCP_SERVICE_ACCOUNT>
+MOLECULE_BUCKET_NAME: <MOLECULE_GCS_BUCKET>
+UTILS_BUCKET_NAME: <UTIL_FILES_GCS_BUCKET>
+MOLECULE_UI_URL: http://<SERVER_IP>:2020/
+DEPLOYMENT_TYPE_LABEL: stage

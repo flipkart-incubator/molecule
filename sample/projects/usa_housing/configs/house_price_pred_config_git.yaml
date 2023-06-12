@@ -1,0 +1,38 @@
+# LOCAL/GIT CONFIG
+# git_url: <GIT_URL>
+# git_branch: main
+# git_commit_id: 
+local_path: ./sample
+
+# global
+y_col: price
+drop_cols:
+  - address
+
+# dump_data
+table: sample_db.usa_housing
+refresh_id: 1621449832
+hql_path: impl/hive/usa_housing.hql
+
+# import_data
+check_no_of_cols: 7
+
+# train_test_split
+seed: 42
+test_size: 0.3
+
+# preprocess_data
+scaling_method: standard
+
+# model_train
+normalize: false
+fit_intercept: true
+n_jobs: 1
+
+dump_data_class: hive/NA
+import_data_class: R/ImportUSAHousing
+train_test_split_class: py/TrainTestSplitUSAHousing
+preprocess_data_class: py/PreprocessUSAHousing
+model_train_class: py/TrainUSAHousing
+model_infer_class: py/InferUSAHousing
+compute_metrics_class: py/ComputeMetricUSAHousing

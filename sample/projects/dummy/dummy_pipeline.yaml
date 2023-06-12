@@ -1,0 +1,45 @@
+dummy_pipeline:
+  type: dummy
+
+  params:
+    seed: int
+    repeat: int
+
+    generate_random_number_class: str
+    make_dummy_list_class: str
+    join_list_to_str_class: str
+
+  params_map:
+    seed: config/seed
+    repeat: config/repeat
+
+    generate_random_number_class: config/generate_random_number_class
+    make_dummy_list_class: config/make_dummy_list_class
+    join_list_to_str_class: config/join_list_to_str_class
+
+  inputs:
+
+  outputs:
+    final_str: dummy
+
+  tasks:
+    generate_random_number:
+      type: generate_random_number
+      params_map:
+        seed: params/seed
+
+    make_dummy_list:
+      type: make_dummy_list
+      params_map:
+        repeat: params/repeat
+
+    join_list_to_str:
+      type: join_list_to_str
+      params_map:
+
+
+  deps:
+    make_dummy_list.cut_str: generate_random_number.new_str
+    join_list_to_str.str_list: make_dummy_list.str_list
+    outputs.final_str: join_list_to_str.joined_str
+

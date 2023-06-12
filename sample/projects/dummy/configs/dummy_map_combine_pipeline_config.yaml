@@ -1,0 +1,22 @@
+# LOCAL/GIT CONFIG
+# git_url: <GIT_URL>
+# git_branch: main
+# git_commit_id: 
+local_path: ./sample
+
+seed: 123
+repeat: 3
+count: 5
+
+generate_random_number_class: py/GetRandomV0
+make_dummy_list_class: py/MakeDummyList
+join_list_to_str_class: py/JoinToStr
+
+map_fn_repeats: dummy_gen_repeats
+use_pipeline_repeats: dummy_slave_pipeline
+use_pipeline_repeats_config: projects/dummy/configs/dummy_pipeline_config.yaml
+map_fn_nums: dummy_gen_nums
+use_pipeline_nums: dummy_pipeline
+use_pipeline_nums_config: projects/dummy/configs/dummy_pipeline_config.yaml
+
+combiner_class: py/DummyConcatCombiner
