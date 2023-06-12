@@ -310,8 +310,8 @@ class Server:
         log.info("COMMAND_CONNECT Recieved")
         log.info(wi)
         ZMQServer.sendACK(self.command_sock, MessageBase.ACK_CONNECT)
-        # # TODO: Check if addWorkerInDB is needed here?
-        # self.db.addWorkerInDB(wi, WorkerStatus.INITIATED)
+        if not self.db.checkWorkerExistsInDB(wi['instance_id']):
+          self.db.addWorkerInDB(wi, WorkerStatus.INITIATED)
         self.db.updateWorkerPorts(wi['instance_id'], wi['port'], wi['health_port'])
         self.db.updateWorkerInDB(wi['instance_id'], WorkerStatus.FREE, task_hash='')
         log.info('Spawner Added: ' + wi['instance_id'])
@@ -402,8 +402,7 @@ class Server:
           self.processTransforms()
           self.requestWorkers()
         except Exception as err:
-          log.critical('Encountered fatal error, did you do something shady?')
-          log.debug('Meh, I won\'t go down so easily! :3')
+          log.critical('Encountered fatal error, check logs and restart platform!')
           self.db.pushNotification(0, 'Fatal Error', 'Check logs and restart platform!')
           print(err)
           print(traceback.format_exc())

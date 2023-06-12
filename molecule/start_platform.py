@@ -50,7 +50,7 @@ class StartPlatform:
     """
     Initializes the database.
     """
-    self.db = database.Database(self.db_env, rebuild=True)
+    self.db = database.Database(self.db_env)
 
   def startServer(self):
     """
